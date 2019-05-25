@@ -11,4 +11,16 @@
     <string name="seven">7</string>
     <string name="eight">8</string>
     <string name="nine">9</string>
+
+    <string name="AC">AC</string>
+    <string name="DEL">DEL</string>
+    <string name="equal">=</string>
+    <string name="divide">÷</string>
+    <string name="multiply">×</string>
+    <string name="subtract">-</string>
+    <string name="add">+</string>
+    <string name="dot">.</string>
+
+    <string name="sciNotation">×10ˣ</string>
+    <string name="ANS">ANS</string>
 </resources>
