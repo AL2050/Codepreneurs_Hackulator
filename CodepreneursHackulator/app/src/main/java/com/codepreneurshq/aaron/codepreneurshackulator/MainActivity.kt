@@ -2,15 +2,9 @@ package com.codepreneurshq.aaron.codepreneurshackulator
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import java.lang.Exception
-import java.lang.NumberFormatException
-import java.lang.reflect.Array.get
-import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -25,38 +19,60 @@ class MainActivity : AppCompatActivity() {
         //these will be used to assign the corresponding output values when the user clicks them
         //press button '1' gives an output of 1 to the mathsProcedure window
 
-        val zero : Button = findViewById(R.id.zero)
-        val one : Button = findViewById(R.id.one)
-        val two : Button = findViewById(R.id.two)
-        val three : Button = findViewById(R.id.three)
-        val four : Button = findViewById(R.id.four)
-        val five : Button = findViewById(R.id.five)
-        val six : Button = findViewById(R.id.six)
-        val seven : Button = findViewById(R.id.seven)
-        val eight : Button = findViewById(R.id.eight)
-        val nine : Button = findViewById(R.id.nine)
+        val zero: Button = findViewById(R.id.zero)
+        val one: Button = findViewById(R.id.one)
+        val two: Button = findViewById(R.id.two)
+        val three: Button = findViewById(R.id.three)
+        val four: Button = findViewById(R.id.four)
+        val five: Button = findViewById(R.id.five)
+        val six: Button = findViewById(R.id.six)
+        val seven: Button = findViewById(R.id.seven)
+        val eight: Button = findViewById(R.id.eight)
+        val nine: Button = findViewById(R.id.nine)
 
-        val ac : Button = findViewById(R.id.AC)
-        val del : Button = findViewById(R.id.DEL)
+        val ac: Button = findViewById(R.id.AC)
+        val del: Button = findViewById(R.id.DEL)
 
-        val add : Button = findViewById(R.id.add)
-        val subtract : Button = findViewById(R.id.subtract)
-        val divide : Button = findViewById(R.id.divide)
-        val multiply : Button = findViewById(R.id.multiply)
+        val add: Button = findViewById(R.id.add)
+        val subtract: Button = findViewById(R.id.subtract)
+        val divide: Button = findViewById(R.id.divide)
+        val multiply: Button = findViewById(R.id.multiply)
 
-        val equal : Button = findViewById(R.id.equal)
+        val equal: Button = findViewById(R.id.equal)
 
-        var intermediateValue : Int = 0     //a value read from typedValue, converted to an integer and stored here before being operated on
+        //a value read from typedValue, converted to an integer and stored here before being operated on
+        var intermediateAddValue = 0
 
-        var mathematicalResult : Int = 0
+        //a value read from typedValue, converted to an integer and stored here before being operated on
+        var intermediateSubtractValue = 0
+
+        //a value read from typedValue, converted to an integer and stored here before being operated on
+        var intermediateDivideValue = 0
+
+        //a value read from typedValue, converted to an integer and stored here before being operated on
+        var intermediateMultiplyValue = 0
+
+
+        var mathematicalResult: Int = 0
 
         //storing characters to be outputted to mathsProcedure window
-        var workingOutput = ""      //this is the string outputted to the mathsProcedure window
+        //this is the string outputted to the mathsProcedure window
+        var workingOutput = ""
 
-        var typedValue = ""         //stores value : value is converted to float/int if an operator button is pressed
+        //stores value : value is converted to float/int if an operator button is pressed
+        var typedValue = ""
 
-        var firstVal : Boolean = true   //used to indicate to operator buttons that they are operating on the
-                                        // first value inputted by the user
+        //used to indicate to operator buttons that they are operating on the first value inputted by the user
+        var firstAddVal = true
+
+        //required to distinguish between '+' and numerical values when erasing workings
+        var firstDelVal = true
+
+        //values added together are stored here
+        var storedAdditions = ArrayList<Int>()
+
+        //flag triggered 'true' when the equals button is pressed and set back to 'false' when either AC or DEL are pressed
+        var equalPressed = false
 
         //handling button clicks by user
         /*----------NUMBERS----------**/
@@ -117,18 +133,117 @@ class MainActivity : AppCompatActivity() {
             typedValue = ""
             mathsProcedure.text = workingOutput
 
-            intermediateValue = 0
+            intermediateAddValue = 0
             mathematicalResult = 0
 
-            result.text = "0"
+            result.text = ""
 
-            firstVal = true
+            storedAdditions.clear()
+
+            firstAddVal = true
+
+            //resetting equals flag, since we have now cleared the stored data, changing the state of the output to
+            //the 'result' window. Likewise, in DEL below, the state of the workingOutput and typedValue changes,
+            //so we reset the 'equalPressed' flag
+            equalPressed = false
+
+            //reset the DEL flag
+            firstDelVal = true
         }
+
+        var revisedResult = 0
+
+        var counter = 0
+
         del.setOnClickListener {
-           //remove the last value appended to workingOutput, and re-evaluate the resulting output for the result window
-            workingOutput = workingOutput.dropLast(1)
-            typedValue = typedValue.dropLast(1)
-            mathsProcedure.text = workingOutput
+            //revise the value in the 'result' window using the 'storedAdditions' ArrayList when the user deletes
+            //an added value in the 'mathsProcedure' window
+
+            //'numDigits' reads the length of the value being deleted, then is decremented. Once it reaches zero,
+            //this multi-digit value is removed from 'storedAdditions'
+            val numDigits = storedAdditions[storedAdditions.count() - 1].toString().length - 1 - counter
+
+            System.out.println("last character of workingOutput is  " + workingOutput.takeLast(1))
+            System.out.println("firstDelVal flag   $firstDelVal \n")
+
+            when {
+                firstDelVal and (workingOutput.takeLast(1) == "+") -> {
+                    System.out.println("T1")
+
+                    //remove the last value appended to workingOutput
+                    workingOutput = workingOutput.dropLast(1)
+                    mathsProcedure.text = workingOutput
+
+                    //disable first delete flag
+                    firstDelVal = false
+
+                    equalPressed = false
+                }
+                firstDelVal and (workingOutput.takeLast(1) != "+") -> {
+                    System.out.println("T2")
+
+                    //remove the last value appended to workingOutput, and re-evaluate the resulting output for the result window
+                    workingOutput = workingOutput.dropLast(1)
+                    mathsProcedure.text = workingOutput
+
+                    //erasing elements from the value just written to memory
+                    typedValue = typedValue.dropLast(1)
+
+                    //disable first delete flag
+                    firstDelVal = false
+
+                    equalPressed = false
+                }
+                !firstDelVal and (workingOutput.takeLast(1) == "+") -> {
+                    System.out.println("T3")
+
+                    //remove the last value appended to workingOutput, and re-evaluate the resulting output for the result window
+                    workingOutput = workingOutput.dropLast(1)
+                    mathsProcedure.text = workingOutput
+
+                    equalPressed = false
+                }
+                !firstDelVal and (workingOutput.takeLast(1) != "+") -> {
+                    System.out.println("T4")
+
+
+
+                    System.out.println("number of digits in last value in storedAdditions is $numDigits")
+
+                    //get number of digits of last number in storedAdditions, then remove this value from workingOutput (use a counter/pointer variable)
+                    //once complete, remove that value from storedAdditions and update the 'result' window
+
+                    if (numDigits > 0) {
+                        System.out.println("T4.1")
+
+                        //remove the last value appended to workingOutput, and re-evaluate the resulting output for the result window
+                        workingOutput = workingOutput.dropLast(1)
+                        mathsProcedure.text = workingOutput
+                        counter += 1
+                    }
+                    else {
+                        System.out.println("T4.2")
+
+                        //remove the last value appended to workingOutput, and re-evaluate the resulting output for the result window
+                        workingOutput = workingOutput.dropLast(1)
+                        mathsProcedure.text = workingOutput
+
+                        storedAdditions.removeAt(storedAdditions.size - 1)
+
+                        //evaluate the revised output to the 'results' window
+                        for (element in storedAdditions) {
+                            revisedResult += element
+                        }
+                        //display result
+                        result.text = revisedResult.toString()
+
+                        //reset revised result for next revision
+                        revisedResult = 0
+                        //reset counter for DEL operations on multi-digit number
+                        counter = 0
+                    }
+                }
+            }
         }
 
         /*----------MATHEMATICAL OPERATORS----------**/
@@ -138,51 +253,71 @@ class MainActivity : AppCompatActivity() {
 
         add.setOnClickListener {
             when {
-                firstVal and (typedValue == "") -> {
+                firstAddVal and (typedValue == "") -> {
                     invalidExprToast.show()
-                    typedValue = "0"
-                    mathematicalResult += typedValue.toInt()
-                    result.text = mathematicalResult.toString()
-                    firstVal = false
-                }
-                firstVal and (typedValue != "") -> {
-                    mathematicalResult += typedValue.toInt()
-                    result.text = mathematicalResult.toString()
-                    firstVal = false
 
-                    intermediateValue += mathematicalResult
+                    typedValue = "0"
+
+                    //pass on previous intermediateValue variable in mathematicalResult variable
+                    mathematicalResult += typedValue.toInt()
+                    //display result
+                    result.text = mathematicalResult.toString()
+
+                    // restoring state of typedValue in case user presses add button again
+                    typedValue = ""
+
+                    //maintain firstValue flag as true
+                    firstAddVal = true
+                }
+                firstAddVal and (typedValue != "") -> {
+                    //pass on previous intermediateValue variable in mathematicalResult variable
+                    mathematicalResult += typedValue.toInt()
+                    //display result
+                    result.text = mathematicalResult.toString()
+
+                    //clear intermediateValue before storing new value
+                    intermediateAddValue += mathematicalResult
+
+                    //append value to be added to storedAdditions
+                    storedAdditions.add(typedValue.toInt())
+
                     //clear string containing previous value
                     typedValue = ""
 
                     //update window to indicate addition operator has been applied
-                    workingOutput += " + "
+                    workingOutput += "+"
                     mathsProcedure.text = workingOutput
+
+                    //disable first value flag
+                    firstAddVal = false
                 }
                 else -> {
-                    //pass on previous intermediateValue variable in mathematicalResult variable
-                    mathematicalResult += intermediateValue
+                    //clear intermediateValue before storing new value
+                    intermediateAddValue = 0
+                    //store value before '+' as a numerical value
+                    intermediateAddValue += typedValue.toInt()     //assume integers for now
 
+                    //pass on previous intermediateValue variable in mathematicalResult variable
+                    mathematicalResult += intermediateAddValue
                     //display result
                     result.text = mathematicalResult.toString()
+
+                    //append value to be added to storedAdditions
+                    storedAdditions.add(typedValue.toInt())
 
                     //if the first button pressed is an operator (in this case the addition operator), or an attempt is made to
                     //use two operators together, through an exception to prevent the action from taking place
                     //[use try-catch in if (firstVal), above for first condition]
 
-
-                    //clear intermediateValue before storing new value
-                    intermediateValue = 0
-                    //store value before '+' as a numerical value
-                    intermediateValue += typedValue.toInt()     //assume integers for now
-
                     //clear string containing previous value
                     typedValue = ""
 
                     //update window to indicate addition operator has been applied
-                    workingOutput += " + "
+                    workingOutput += "+"
                     mathsProcedure.text = workingOutput
                 }
             }
+            System.out.println("storedAdditions:   $storedAdditions")
         }
 //        subtract.setOnClickListener {
 //            //update window to indicate subtraction has occurred
@@ -205,8 +340,19 @@ class MainActivity : AppCompatActivity() {
         equal.setOnClickListener {
             //execution of mathematical expression
             //read typedValueString, and translate in mathematical operation
+            if (equalPressed == false and (intermediateAddValue != 0)) {
 
+                //revise output to 'result' window
+                mathematicalResult += typedValue.toInt()
+
+                //display result
+                result.text = mathematicalResult.toString()
+
+                equalPressed = true
+            }
+            else if (equalPressed == false and (intermediateAddValue == 0)) {
+                equalPressed = true
+            }
         }
     }
-    //the user presses a button, and its corresponding value is stored in memory, ready for calculations
 }
